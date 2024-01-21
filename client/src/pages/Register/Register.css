@@ -1,0 +1,70 @@
+.register {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  align-items: center;
+  background-color: #526d82;
+}
+
+.register .brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  color: white;
+  text-transform: uppercase;
+}
+
+.register form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background-color: #27374d;
+  border-radius: 2rem;
+  padding: 3rem 5rem;
+}
+
+.register input {
+  background-color: transparent;
+  padding: 1rem;
+  border: 0.1rem solid #9db2bf;
+  border-radius: 0.4rem;
+  color: white;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.register input:focus {
+  border: 0.1rem solid #997af0;
+  outline: none;
+}
+
+.register button {
+  background-color: #9db2bf;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 0.4rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.register button:hover {
+  background-color: #9db2bf;
+}
+
+.register span {
+  color: white;
+  text-transform: uppercase;
+}
+
+.register span a {
+  color: #9db2bf;
+  text-decoration: none;
+  font-weight: bold;
+}
