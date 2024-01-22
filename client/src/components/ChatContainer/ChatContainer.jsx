@@ -6,12 +6,11 @@ import "./ChatContainer.css";
 import { sendMessageRoute, recieveMessageRoute } from "../../utils/APIRoutes";
 import { connect, StringCodec } from "nats.ws";
 
-export default function ChatContainer({ currentChat, socket }) {
+export default function ChatContainer({ currentChat }) {
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef();
   const [arrivalMessage, setArrivalMessage] = useState(null);
   const [commonSub, setCommonSub] = useState("");
-  // const [userid, setuserid] = useState("");
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(async () => {
@@ -37,28 +36,16 @@ export default function ChatContainer({ currentChat, socket }) {
   }, []);
 
   const createCommonSub = (user1, user2) => {
-    // store in array and sort and then join
     user1 = user1.toString();
     user2 = user2.toString();
     const arr = [user1, user2];
     arr.sort();
-    // console.log(arr);
     const topic = arr[0] + arr[1];
-    console.log(topic);
     setCommonSub(topic);
   };
 
   const handleSendMsg = async (msg) => {
     const data = await JSON.parse(localStorage.getItem(process.env.KEY));
-
-    console.log(currentChat._id); // reciever
-    console.log(data._id); // sender
-
-    socket.current.emit("send-msg", {
-      to: currentChat._id,
-      from: data._id,
-      msg,
-    });
 
     // publish to nats
     publisher(nc, commonSub, msg);
@@ -74,14 +61,6 @@ export default function ChatContainer({ currentChat, socket }) {
     setMessages(msgs);
   };
 
-  useEffect(() => {
-    if (socket.current) {
-      socket.current.on("msg-recieve", (msg) => {
-        setArrivalMessage({ fromSelf: false, message: msg });
-        // subscriber(nc, commonSub);
-      });
-    }
-  }, []);
 
   useEffect(() => {
     arrivalMessage && setMessages((prev) => [...prev, arrivalMessage]);
@@ -92,8 +71,6 @@ export default function ChatContainer({ currentChat, socket }) {
   }, [messages]);
 
   const [nc, setConnection] = useState(undefined);
-  const [topic, setTopic] = useState("");
-  const [message, setMessage] = useState("");
   const state = nc ? "connected" : "disconnected";
 
   const publisher = async (nc, topic, message) => {
@@ -111,8 +88,7 @@ export default function ChatContainer({ currentChat, socket }) {
         const msg = StringCodec().decode(m.data);
         console.log("recieved msg: ", msg);
         console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
-        // setMessages([...messages, msg]);
-        // messages.push(StringCodec().decode(m.data));
+        setArrivalMessage({ fromSelf: false, message: msg });
       }
 
       console.log("subscription closed");
