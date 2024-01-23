@@ -61,7 +61,6 @@ const serverSubscriber = async (nc, t) => {
     for await (const m of sub) {
       const msg = StringCodec().decode(m.data);
       const data = JSON.parse(msg);
-      console.log(data);
       addMessageNats(data);
     }
 
