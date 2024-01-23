@@ -37,3 +37,19 @@ module.exports.addMessage = async (req, res, next) => {
     next(err);
   }
 };
+
+module.exports.addMessageNats = async (body) => {
+  try {
+    const { from, to, msg } = body;
+    const data = await Messages.create({
+      message: { text: msg },
+      users: [from, to],
+      sender: from,
+    });
+
+    if (data) return { msg: "Message added successfully." };
+    else return { msg: "Failed to add message to the database" };
+  } catch (err) {
+    console.log(err.message);
+  }
+};

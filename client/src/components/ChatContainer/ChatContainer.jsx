@@ -21,7 +21,7 @@ export default function ChatContainer({ currentChat }) {
     });
     setMessages(response.data);
     createCommonSub(currentChat._id, data._id);
-    
+
   }, [currentChat]);
 
   
@@ -40,7 +40,7 @@ export default function ChatContainer({ currentChat }) {
     user2 = user2.toString();
     const arr = [user1, user2];
     arr.sort();
-    const topic = arr[0] + arr[1];
+    const topic = "rahul." + arr[0] + arr[1];
     setCommonSub(topic);
   };
 
@@ -48,13 +48,8 @@ export default function ChatContainer({ currentChat }) {
     const data = await JSON.parse(localStorage.getItem(process.env.KEY));
 
     // publish to nats
-    publisher(nc, commonSub, msg);
-
-    await axios.post(sendMessageRoute, {
-      from: data._id,
-      to: currentChat._id,
-      message: msg,
-    });
+    const info = { from: data._id, to: currentChat._id, msg: msg };
+    publisher(nc, commonSub, JSON.stringify(info));
 
     const msgs = [...messages];
     msgs.push({ fromSelf: true, message: msg });
@@ -81,14 +76,18 @@ export default function ChatContainer({ currentChat }) {
 
   const subscriber = async (nc, t) => {
     if (nc) {
-      console.log("connected as Subscriber");
+      // console.log("connected as Subscriber");
       const sub = nc.subscribe(t);
-      console.log(sub);
+      // console.log(sub);
       for await (const m of sub) {
-        const msg = StringCodec().decode(m.data);
-        console.log("recieved msg: ", msg);
-        console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
-        setArrivalMessage({ fromSelf: false, message: msg });
+        const info = StringCodec().decode(m.data);
+        // console.log("recieved msg: ", info);
+        // console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
+        const infoJson = JSON.parse(info);
+
+        if(infoJson.from === currentChat._id){
+          setArrivalMessage({ fromSelf: false, message: infoJson.msg });
+        }
       }
 
       console.log("subscription closed");
@@ -113,7 +112,7 @@ export default function ChatContainer({ currentChat }) {
     }
   }, [nc]);
 
-  useEffect(() => {subscriber(nc, commonSub);}, [nc,commonSub])
+  useEffect(() => {subscriber(nc, commonSub);}, [nc, commonSub])
 
   return (
     <div className="chat-container">
