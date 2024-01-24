@@ -24,7 +24,7 @@ export default function Register() {
     if (localStorage.getItem(process.env.KEY)) {
       navigate("/");
     }
-  }, []);
+  }, [navigate]);
 
   const handleChange = (event) => {
     setUser({ ...user, [event.target.name]: event.target.value });

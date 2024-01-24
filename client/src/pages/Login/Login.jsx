@@ -20,7 +20,7 @@ export default function Login() {
     if (localStorage.getItem(process.env.KEY)) {
       navigate("/");
     }
-  }, []);
+  });
 
   const handleChange = (event) => {
     setUser({ ...user, [event.target.name]: event.target.value });

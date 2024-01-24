@@ -13,15 +13,16 @@ export default function ChatContainer({ currentChat }) {
   const [commonSub, setCommonSub] = useState("");
   const [subs, setSubs] = useState([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(async () => {
-    const data = await JSON.parse(localStorage.getItem(process.env.KEY));
-    const response = await axios.post(recieveMessageRoute, {
-      from: data._id,
-      to: currentChat._id,
-    });
-    setMessages(response.data);
-    createCommonSub(currentChat._id, data._id);
+  useEffect(() => {
+    (async () => {
+      const data = await JSON.parse(localStorage.getItem(process.env.KEY));
+      const response = await axios.post(recieveMessageRoute, {
+        from: data._id,
+        to: currentChat._id,
+      });
+      setMessages(response.data);
+      createCommonSub(currentChat._id, data._id);
+    })();
   }, [currentChat]);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function ChatContainer({ currentChat }) {
       }
     };
     getCurrentChat();
-  }, []);
+  }, [currentChat]);
 
   const createCommonSub = (user1, user2) => {
     user1 = user1.toString();
@@ -71,27 +72,6 @@ export default function ChatContainer({ currentChat }) {
     }
   };
 
-  const subscriber = async (nc, subject) => {
-    if (nc && !subs.includes(subject)) {
-      // console.log("connected as Subscriber");
-      const sub = nc.subscribe(subject);
-      setSubs((prev) => [...prev, subject]);
-      // console.log(sub);
-      for await (const m of sub) {
-        const info = StringCodec().decode(m.data);
-        // console.log("recieved msg: ", info);
-        // console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
-        const infoJson = JSON.parse(info);
-
-        if (infoJson.from === currentChat._id) {
-          setArrivalMessage({ fromSelf: false, message: infoJson.msg });
-        }
-      }
-
-      console.log("subscription closed");
-    }
-  };
-
   useEffect(() => {
     if (nc === undefined) {
       const connectNats = async () => {
@@ -109,8 +89,29 @@ export default function ChatContainer({ currentChat }) {
   }, [nc]);
 
   useEffect(() => {
+    const subscriber = async (nc, subject) => {
+      if (nc && !subs.includes(subject)) {
+        // console.log("connected as Subscriber");
+        const sub = nc.subscribe(subject);
+        setSubs((prev) => [...prev, subject]);
+        // console.log(sub);
+        for await (const m of sub) {
+          const info = StringCodec().decode(m.data);
+          // console.log("recieved msg: ", info);
+          // console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
+          const infoJson = JSON.parse(info);
+
+          if (infoJson.from === currentChat._id) {
+            setArrivalMessage({ fromSelf: false, message: infoJson.msg });
+          }
+        }
+
+        console.log("subscription closed");
+      }
+    };
+
     subscriber(nc, commonSub);
-  }, [nc, commonSub]);
+  }, [nc, commonSub, subs, currentChat._id]);
 
   return (
     <div className="chat-container">
