@@ -3,7 +3,7 @@ import ChatInput from "../Input/ChatInput";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import "./ChatContainer.css";
-import { sendMessageRoute, recieveMessageRoute } from "../../utils/APIRoutes";
+import { recieveMessageRoute } from "../../utils/APIRoutes";
 import { connect, StringCodec } from "nats.ws";
 
 export default function ChatContainer({ currentChat }) {
@@ -11,6 +11,7 @@ export default function ChatContainer({ currentChat }) {
   const scrollRef = useRef();
   const [arrivalMessage, setArrivalMessage] = useState(null);
   const [commonSub, setCommonSub] = useState("");
+  const [subs, setSubs] = useState([]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(async () => {
@@ -21,10 +22,7 @@ export default function ChatContainer({ currentChat }) {
     });
     setMessages(response.data);
     createCommonSub(currentChat._id, data._id);
-
   }, [currentChat]);
-
-  
 
   useEffect(() => {
     const getCurrentChat = async () => {
@@ -56,7 +54,6 @@ export default function ChatContainer({ currentChat }) {
     setMessages(msgs);
   };
 
-
   useEffect(() => {
     arrivalMessage && setMessages((prev) => [...prev, arrivalMessage]);
   }, [arrivalMessage]);
@@ -74,10 +71,11 @@ export default function ChatContainer({ currentChat }) {
     }
   };
 
-  const subscriber = async (nc, t) => {
-    if (nc) {
+  const subscriber = async (nc, subject) => {
+    if (nc && !subs.includes(subject)) {
       // console.log("connected as Subscriber");
-      const sub = nc.subscribe(t);
+      const sub = nc.subscribe(subject);
+      setSubs((prev) => [...prev, subject]);
       // console.log(sub);
       for await (const m of sub) {
         const info = StringCodec().decode(m.data);
@@ -85,14 +83,12 @@ export default function ChatContainer({ currentChat }) {
         // console.log(`[${sub.getProcessed()}]: ${StringCodec().decode(m.data)}`);
         const infoJson = JSON.parse(info);
 
-        if(infoJson.from === currentChat._id){
+        if (infoJson.from === currentChat._id) {
           setArrivalMessage({ fromSelf: false, message: infoJson.msg });
         }
       }
 
       console.log("subscription closed");
-    } else {
-      console.log("Not connected");
     }
   };
 
@@ -112,7 +108,9 @@ export default function ChatContainer({ currentChat }) {
     }
   }, [nc]);
 
-  useEffect(() => {subscriber(nc, commonSub);}, [nc, commonSub])
+  useEffect(() => {
+    subscriber(nc, commonSub);
+  }, [nc, commonSub]);
 
   return (
     <div className="chat-container">
